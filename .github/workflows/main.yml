@@ -1,0 +1,17 @@
+name: Build project
+
+on:
+  push:
+    branch: [ master ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+      - run: |-
+          terraform fmt -check
+          terraform init
+          terraform validate
