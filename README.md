@@ -12,39 +12,33 @@ $ tfenv install
 
 ##### Установка terragrunt с помощью [tgswitch](https://github.com/warrensbox/tgswitch)
 
-Устанавливаем версию terraform из файла [tgswitch](https://github.com/warrensbox/tgswitch).
+Устанавливаем версию terraform из файла [.terragrunt-version](.terragrunt-version).
 
 ```shell
 $ tgswith
 ```
 
-##### Инициализация AWS cli
-
-```shell
-$ asw configure
-AWS Access Key ID: <Access Key>
-AWS Secret Access Key: <Secret Key>
-Default region name: eu-central-1
-Default output format: yaml
-```
-
-Получение Access/Secret keys: go to [AWS console](https://console.aws.amazon.com/) -> `Security Credentials`
--> `Access keys (access key ID and secret access key)` -> `Create New Access Key`.
-
 ## Запуск кластера
 
 ```shell
-$ terraform plan
-$ terraform apply
-$ aws eks --region $(terraform output -raw region) update-kubeconfig \
-    --name $(terraform output -raw cluster_name)
-    
+$ cd dev/kubernetes
+$ echo 'do_token = "<DigitalOcean Token>"' | tee vars.auto.tfvars > /dev/null
+
+$ terragrunt plan --out main.tfplan
+
+$ terragrunt apply main.tfplan
+
+$ doctl kubernetes cluster kubeconfig save k8s-cluster 
+
 $ kubectl get nodes
 ```
 
-## Ссылки
+Получить DigitalOcean Access Token: [Control Panel](https://cloud.digitalocean.com/) -> `API` -> `Generate New Token`.
 
-1. [terraform-docs](https://github.com/terraform-docs/terraform-docs)
-2. [Provision Amazon EKS Cluster using Terraform](https://medium.com/devops-mojo/terraform-provision-amazon-eks-cluster-using-terraform-deploy-create-aws-eks-kubernetes-cluster-tf-4134ab22c594)
-3. [AWS VPC Terraform module](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest)
-4. [AWS EKS Terraform module](https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest)
+## Обновление описания модуля
+
+Конфигурация [terraform-docs](https://terraform-docs.io/) находится в [.terraform-docs.yml](.terraform-docs.yml).
+
+```shell
+$ terraform-docs table document modules/kubernetes/
+```

@@ -4,6 +4,8 @@
 *.iws
 *.ipr
 **/.terraform/*
+**/.terragrunt-cache/*
+*.tfplan
 *.tfstate
 *.tfstate.*
 *.auto.tfvars

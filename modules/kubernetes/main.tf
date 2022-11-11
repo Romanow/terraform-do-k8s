@@ -2,7 +2,7 @@ data "digitalocean_kubernetes_versions" "version" {
   version_prefix = "1.24."
 }
 
-resource "digitalocean_kubernetes_cluster" "cluster" {
+resource "digitalocean_kubernetes_cluster" "main" {
   name    = var.k8s_cluster_name
   region  = var.k8s_cluster_region
   version = data.digitalocean_kubernetes_versions.version.latest_version
@@ -20,16 +20,16 @@ data "digitalocean_certificate" "certificate" {
 }
 
 provider "kubernetes" {
-  host                   = digitalocean_kubernetes_cluster.cluster.endpoint
-  token                  = digitalocean_kubernetes_cluster.cluster.kube_config[0].token
-  cluster_ca_certificate = base64decode(digitalocean_kubernetes_cluster.cluster.kube_config[0].cluster_ca_certificate)
+  host                   = digitalocean_kubernetes_cluster.main.endpoint
+  token                  = digitalocean_kubernetes_cluster.main.kube_config[0].token
+  cluster_ca_certificate = base64decode(digitalocean_kubernetes_cluster.main.kube_config[0].cluster_ca_certificate)
 }
 
 provider "helm" {
   kubernetes {
-    host                   = digitalocean_kubernetes_cluster.cluster.endpoint
-    token                  = digitalocean_kubernetes_cluster.cluster.kube_config[0].token
-    cluster_ca_certificate = base64decode(digitalocean_kubernetes_cluster.cluster.kube_config[0].cluster_ca_certificate)
+    host                   = digitalocean_kubernetes_cluster.main.endpoint
+    token                  = digitalocean_kubernetes_cluster.main.kube_config[0].token
+    cluster_ca_certificate = base64decode(digitalocean_kubernetes_cluster.main.kube_config[0].cluster_ca_certificate)
   }
 }
 
@@ -57,7 +57,7 @@ resource "helm_release" "ingress" {
   }
 }
 
-data "kubernetes_service" "nginx-ingress" {
+data "kubernetes_service" "ingress_data" {
   metadata {
     name      = "nginx-stable-nginx-ingress"
     namespace = "nginx-ingress"
@@ -67,11 +67,11 @@ data "kubernetes_service" "nginx-ingress" {
   ]
 }
 
-resource "digitalocean_record" "base-public" {
+resource "digitalocean_record" "public" {
   count  = length(var.hostnames)
   domain = var.domain
   name   = var.hostnames[count.index]
   type   = "A"
   ttl    = 300
-  value  = data.kubernetes_service.nginx-ingress.status[0].load_balancer[0].ingress[0].ip
+  value  = data.kubernetes_service.ingress_data.status[0].load_balancer[0].ingress[0].ip
 }
